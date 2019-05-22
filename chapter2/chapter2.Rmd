@@ -1,0 +1,180 @@
+---
+title: "第2章"
+author: "刘健"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r 2.1 ,warning=FALSE}
+
+library(tidyverse)
+
+
+df <- tribble(
+   ~id, ~gender, ~weight, ~age,
+   1,   "男",    70,     23,
+   2,   "女",    60,     25,
+   3,   "女",    55,     26,
+   4,   "女",    58,     22,
+   5,   "男",    80,     23,
+   6,   "男",    85,     30
+)
+
+df_uncleaned <- df %>%
+  spread(gender,weight)
+
+df %>% gather(key, value, -id,-gender)
+```
+```{r spread}
+df %>% 
+  gather(key , value,-1,-2) %>%
+  spread(key, value)
+
+```
+
+```{r tibble}
+library(readr)
+iris <- write.csv(data.frame(iris3),file = "iris.csv",row.names = F)
+
+iris <- read.csv("./RawData/iris.csv",stringsAsFactors = F)
+class(iris)
+iris <- read_csv("./RawData/iris.csv")
+class(iris)
+iris
+```
+```{r why tibble 2.2.1}
+library(tibble)
+
+data.frame(`a + b` = 1:5)
+
+tibble(`a + b` = 1:5)
+
+tibble(a = 1:6,b = a*2)
+
+df <- tribble(
+   ~id, ~gender, ~"体重", ~age,
+   1,   "男",    70,     23,
+   2,   "女",    60,     25,
+   3,   "女",    55,     26,
+   4,   "女",    58,     22,
+   5,   "男",    80,     23,
+   6,   "男",    85,     30
+)
+
+
+```
+
+```{r as_tibble}
+y <- 1:3
+y
+as_tibble(x = y)
+```
+
+```{r as_tibble.2}
+
+b <- matrix(data = 1:9,nrow = 3,ncol = 3,byrow = T,dimnames = list(paste0("Row",1:3),paste0("col",1:3)))
+b
+as_tibble(x = b,rownames = NULL)
+as_tibble(x = b,rownames = NA)
+```
+```{r data.frame}
+df <- data.frame(z = 1:3,row.names = 1:3)
+df
+as.tibble(df,rownames = NULL)
+as.tibble(df,rownames = NA)
+```
+```{r list}
+l <- list(a = 1:3,b = letters[2:4],c = 1)
+l
+as.tibble(l)
+
+```
+
+
+
+```{r}
+df <- data.frame(x = c("x: 123", "y: error: 7"))
+separate(df, x, c("key", "value"), ": ", extra = "merge")
+
+```
+```{r GATHER}
+df <- tribble(
+   ~"id", ~"男 weight", ~"女 weight", ~"男 age", ~"女 age",
+   1,       70,   NA,  23, NA,
+   2,       NA,   60,  NA,  25,
+   3,   NA,     55, NA,  26,
+   4,   NA,     58, NA,  22,
+   5,   80,     NA, 23, NA,
+   6,   85,     NA, 30, NA
+)
+df
+library(tidyverse)
+df %>%
+  gather(data = .,key = key, value = value, ... = -id)%>%
+  separate(data = .,key, into = c("gender","key")) %>%
+  drop_na(data = .,... = value)
+df <- df %>%
+  gather(key, value, -id) %>%
+  separate(key, c("gender","key"))%>%
+  drop_na(value)
+df %>%
+  nest(-gender)
+df %>%
+  nest(-id)
+```
+```{r separate_rows}
+df <- data.frame(
+  x = 1:3,
+  y = c("a", "d,e,f", "g,h"),
+  z = c("1", "2,3,4", "5,6"),
+  stringsAsFactors = FALSE
+)
+df
+separate_rows(df, y, z, convert = TRUE)
+
+```
+```{r lubridate}
+library(lubridate)
+ymd(c(20180102, "2017-01-02","20180102"))
+
+dmy_h(c(1802201810,"20-10-2018 24"),tz = "Asia/Shanghai")
+date <- ymd(c(20180102, "2017-02-07","20180711"))
+year(date)
+month(date)
+week(date)
+day(date)
+hour(date)
+
+example_messyDate <- c("24 Jan 2018",1802201810)
+
+guess_formats(example_messyDate,c("mdY", "BdY", "Bdy", "bdY", "bdy","dbY","dmYH"))
+
+parse_date_time(example_messyDate,orders = c("dObY","dOmYH","dmYH"))
+
+
+```
+
+```{r stringr}
+library(stringr)
+example_txt <- "sub and gsub perform replacement of the first and all matches respectively."
+str_replace(string = example_txt,pattern = "a",replacement = "@")
+str_replace_all(string = example_txt,pattern = "a",replacement = "@")
+
+
+df <- readRDS("RawData/df.rds")
+df1 <- df[c(21,3,5),c(-2,-4)]
+df1
+# str_view(df1$authors,pattern = ".+")
+# 
+# str_view(df1$authors,pattern = "\\.")
+# str_view_all(df1$authors,pattern = "\\.")
+# str_detect(df1$authors,pattern = "\\.")
+# str_view_all(df1$authors,pattern = "[:alnum:]+")
+df1$authors <- str_replace(df1$authors,pattern = "pp\\..+[:digit:]{2,3}\\-[:digit:]{2,3}",replacement = "")
+df1
+```
+

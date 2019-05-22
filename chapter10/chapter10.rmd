@@ -1,0 +1,147 @@
+---
+title: "第10章"
+author: "邬书豪 刘健"
+output: github_document
+---
+  
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+
+```
+
+
+```{r}
+library(Rmisc)           # multiplot()
+library(tidyverse)           # group_by() / %>% summarise()
+```
+
+
+
+```{r}
+edudata <- read_csv("./xAPI-Edu-Data.csv") #读入数据
+glimpse(edudata)             # 查看数据的基本结构
+```
+
+
+
+
+
+```{r}
+
+col_names <- colnames(edudata)
+
+col_translation <- read_csv("./metadata.csv", col_names = FALSE)
+col_translation
+colnames(edudata) <- col_translation$X__1
+
+identical(col_names[order(col_names)], col_translation$X__1[order(col_translation$X__1)])
+
+
+
+col_names <- col_translation$X__1
+for(i in seq_along(col_names)){
+ j <-  which(col_names[i] == col_translation$X__1)
+ col_names[i] <- col_translation$X__2[j]
+}
+identical(col_names[order(col_names)], col_translation$X__2[order(col_translation$X__2)])
+col_names
+colnames(edudata)
+col_names <- colnames(edudata) %>% 
+  as_data_frame()
+col_names %>% 
+  left_join(col_translation, by = c("value" = "X__1"))
+
+
+
+col_translation %>% 
+  arrange(X__1)
+
+sapply(edudata, function(x){
+  if(is.character(x)){
+    unique(x)
+  }
+})
+
+edudata %>% 
+  select_if(is.character) %>% 
+  map(., ~ unique(.)) %>% 
+  head()
+
+
+```
+```{r}
+edudata %>% 
+  group_by(gender) %>% 
+  summarise( "学生人数" = n())
+
+```
+
+
+
+## 4 barchart
+
+
+```{r}
+edudata <- read_csv("./xAPI-Edu-Data.csv") #读入数据
+
+edudata %>% 
+  ggplot(aes(Class, fill = gender)) + 
+    geom_bar(position = 'dodge') +
+    labs(x = '成绩水平', y = '学生人数') +
+    theme_minimal()
+
+```
+
+```{r}
+edudata$gender <- as.factor(edudata$gender)
+edudata$Class <- as.factor(edudata$Class)
+levels(edudata$gender)
+levels(edudata$gender) <- c("女","男")
+
+levels(edudata$Class)
+levels(edudata$Class) <- c("高", "低", "中")
+edudata$Class <- factor(edudata$Class, levels(edudata$Class)[c(1,3,2)] )
+
+
+```
+
+
+```{r}
+edudata %>% 
+  ggplot(aes(Class, fill = gender)) + 
+    geom_bar(position = 'dodge') +
+    labs(x = '成绩水平', y = '学生人数') +
+    theme_minimal()
+
+```
+```{r}
+edudata %>% 
+  ggplot(aes(Class, fill = gender)) + 
+    geom_bar(position = 'fill') +
+    labs(x = '成绩水平', y = '学生人数') +
+    theme_minimal()
+
+```
+
+### 4.6 探索学生逃课次数与学生成绩水平的关系
+
+```{r}
+
+edudata %>% 
+  ggplot(aes(Class, fill = StudentAbsenceDays)) + 
+  geom_bar(position = 'fill') +
+  labs(x = '成绩水平', y = '学生人数') +
+  scale_fill_manual(name = "缺席天数", labels = c(">7", "<7"), values = c("blue", "red"))+
+  theme_minimal()
+
+
+```
+
+
+
+
+
+
+

@@ -1,0 +1,196 @@
+---
+title: "第8章"
+author: "邬书豪 刘健"
+output: github_document
+---
+
+
+
+```{r warning=FALSE,message=FALSE}
+library(Rmisc)     # multiplot()
+library(tidyverse)    # ggplot()
+library(lubridate)   # ymd_hms()
+library(data.table) 
+library(corrplot)    # corrplot.mixed()
+options(scipen = 20)  # 避免绘图时使用科学计数法表示某一个数值
+
+```
+
+
+```{r}
+bike <- fread("./train.csv")
+```
+
+```{r}
+str(bike)
+```
+
+```{r}
+summary(bike)
+```
+
+
+```{r}
+table(bike$season)   
+table(bike$weather)   
+```
+
+
+```{r}
+bike$season <- factor(bike$season, labels = c("Spring", "Summer", "Fall", "Winter"))
+bike$weather <- factor(bike$weather, labels = c("Good", "Normal", "Bad", "Very Bad"))
+
+table(bike$season)
+table(bike$weather)
+```
+
+
+```{r}
+bike$hour <- lubridate::hour(ymd_hm(bike$datetime))
+```
+
+
+```{r}
+bike <- bike[,-c(10, 11)] 
+head(bike)
+```
+
+
+
+
+```{r}
+
+bike %>%
+  group_by(hour) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = hour, y = mcount, fill = hour)) +
+  geom_bar(stat = 'identity') +
+  guides(fill = 'none') +
+  theme_minimal()
+```
+
+
+```{r}
+p2 <- bike %>%
+  group_by(season) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = reorder(season, mcount), y = mcount, fill = season)) +
+  geom_bar(stat = 'identity') +
+  labs(x = 'senson', y = 'mcount') +
+  guides(fill = 'none') +
+  theme_minimal()
+
+p3 <- bike %>%
+  group_by(season) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = reorder(season, mcount), y = mcount, fill = season)) +
+  geom_bar(stat = 'identity', width = 1) +
+  coord_polar(theta = "y") +
+  labs(x = 'senson', y = 'mcount') +
+  guides(fill = 'none') +
+  theme_minimal()
+
+multiplot(p2, p3, cols = 2)
+```
+
+
+```{r}
+bike %>%
+  group_by(season, hour) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = hour, y = mcount, group = season, shape= season, linetype = season)) +
+  geom_line() +
+  theme_bw() +
+  geom_point()
+
+```
+
+
+```{r}
+p5 <- bike %>%
+  group_by(weather) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = reorder(weather, mcount), y = mcount, fill = weather)) +
+  geom_bar(stat = 'identity') +
+  labs(x = 'weather') +
+  guides(fill = 'none') +
+  theme_minimal()
+
+
+p6 <- bike %>%
+  group_by(weather) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = reorder(weather, mcount), y = mcount, fill = weather)) +
+  geom_bar(stat = 'identity', width = 1) +
+  coord_polar(theta = "y") +
+  labs(x = 'senson', y = 'mcount') +
+  guides(fill = 'none') +
+  theme_minimal()
+
+multiplot(p5, p6, cols = 2)
+```
+
+
+```{r}
+bike %>%
+  group_by(weather, hour) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = hour, y = mcount, group = weather, shape= weather,linetype = weather)) +
+  geom_line(aes(group = weather)) +
+  theme_bw() +
+  geom_point()
+
+```
+
+
+```{r}
+p8 <- bike %>%
+  group_by(holiday) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = factor(holiday), y = mcount, fill = factor(holiday))) +
+  geom_bar(stat = 'identity') +
+  guides(fill = 'none') +
+  labs(x = 'holiday') +
+  theme_minimal()
+
+
+# 探索是否工作日的平均租车频次
+p9 <- bike %>%
+  group_by(workingday) %>%
+  summarise(mcount = mean(count)) %>%
+  ggplot(aes(x = factor(workingday), y = mcount, fill = factor(workingday))) +
+  geom_bar(stat = 'identity') +
+  guides(fill = 'none') +
+  labs(x = 'workingday') +
+  theme_minimal()
+
+multiplot(p8, p9, cols = 2)
+```
+
+
+
+
+
+
+
+```{r}
+bike %>%
+  group_by(holiday, hour) %>%
+  summarise(mcount = mean(count)) %>%
+  mutate(Holiday = as.factor(holiday)) %>%
+  ggplot(aes(x = hour, y = mcount, group  = Holiday, shape = Holiday )) +
+  geom_line(aes(group = factor(holiday))) +
+  geom_point() +
+  theme_bw()
+
+```
+
+
+
+
+
+```{r}
+
+cor(bike[,c(6:9, 10)]) %>%
+  corrplot.mixed()
+```

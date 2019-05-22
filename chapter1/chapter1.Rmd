@@ -1,0 +1,195 @@
+---
+title: "第1章"
+author: "刘健"
+output: github_document
+---
+
+
+```{r read.csv}
+flights <- read.csv(file = "RawData/flights.csv")
+str(object = flights)
+```
+
+
+```{r 1}
+flights1 <- read.csv(file = "RawData/flights1.csv") 
+str(object = flights1) 
+```
+
+
+```{r 3}
+flights3 <- read.csv(file = "RawData/flights1.csv", sep = "\t")
+str(flights3) 
+```
+
+
+```{r 5}
+flights_str <- read.csv(file = "RawData/flightsstrings.csv", sep = "\t", stringsAsFactors = FALSE)
+str(object = flights_str)
+```
+
+
+```{r}
+flights <- read.table(file = "RawData/flights.csv")
+head(x = flights)
+```
+
+
+```{r header}
+flights <- read.table(file = "RawData/flights.csv",header = TRUE)
+head(x = flights)
+```
+
+
+
+```{r sep}
+flights <- read.table(file = "RawData/flights.csv",header = TRUE,sep = ",")
+head(flights)
+```
+
+
+```{r include=FALSE}
+airlines <- read.table(file = "RawData/airlines.csv", header = F, sep = "\t", blank.lines.skip = T, stringsAsFactors = FALSE,fill = T)
+print(airlines)
+
+```
+
+```{r keep blank lines}
+airlines <- read.table(file = "RawData/airlines.csv", header = TRUE, sep = "\t", blank.lines.skip = FALSE, stringsAsFactors = FALSE)
+head(airlines, n = 8)
+```
+
+
+
+```{r col.names}
+airlines <- read.table(file = "RawData/airlines.csv", header = FALSE, sep = "\t", stringsAsFactors = FALSE, col.names = paste0("V",1:6), blank.lines.skip = FALSE)
+head(airlines)
+```
+
+```{r countfield}
+number_of_col <- max(count.fields("RawData/airlines.csv",sep = "\t"))
+airlines <- read.table(file = "RawData/airlines.csv", header = FALSE, sep = "\t", stringsAsFactors = FALSE, col.names = paste0("V",seq_len(number_of_col)), blank.lines.skip = FALSE)
+head(airlines)
+```
+
+
+
+```{r fill` 和`header`}
+flights_uneven <- read.table("RawData/airlines.csv", header = FALSE, sep = "\t", stringsAsFactors = FALSE, fill = TRUE)
+head(flights_uneven)
+```
+
+
+```{r 9}
+flights_uneven <- read.table(file = "RawData/flights_uneven.csv", header = FALSE, sep = "\t", stringsAsFactors = FALSE, fill = TRUE, na.strings = c(""))
+head(flights_uneven)
+```
+
+
+```{r 10}
+flights_uneven <- read.table("RawData/flights_uneven.csv",sep = "\t", stringsAsFactors = FALSE, fill = TRUE,header = FALSE, na.strings = c(paste0("测试",1:3),""))
+head(flights_uneven)
+```
+
+
+
+```{r 12}
+flights_uneven <- read.table("RawData/flights_uneven.csv",sep = "\t", stringsAsFactors = FALSE, fill = TRUE, header = FALSE)
+replace <- unique(flights_uneven$V7)
+replace
+```
+```{r 13}
+flights_uneven <- read.table("RawData/flights_uneven.csv",sep = "\t", stringsAsFactors = FALSE, fill = TRUE,header = FALSE, na.strings = c(replace[c(1,3)]))
+head(flights_uneven)
+```
+
+
+```{r 19, warning=FALSE,message=FALSE}
+library(tidyverse)
+```
+
+```{r 20, eval=FALSE}
+read_csv("RawData/flights_large.csv")
+```
+
+
+```{r 21, eval=FALSE}
+flights <- read_csv("RawData/flights_large.csv")
+str(flights)
+```
+
+```{r 22, eval=FALSE }
+system.time(read.csv("RawData/flights_large.csv",stringsAsFactors = FALSE))
+system.time(read_csv("RawData/flights_large.csv"))
+```
+
+
+```{r 23, eval=FALSE}
+flights <- read_delim("RawData/flights_large2.csv",delim = "_")
+problems(flights)
+```
+
+
+```{r readxl}
+library(readxl)
+readxl_example()[4]
+```
+```{r read uneven}
+library(data.table)
+fread(file = "./RawData/airlines.csv", header = F, sep = "\t", blank.lines.skip = FALSE)
+```
+
+```{r }
+library(tidyverse)
+readxl_example(path = "datasets.xlsx")
+iris <- read_excel(path = readxl_example(path = "datasets.xlsx"))
+str(iris)
+
+```
+
+```{r excel_sheets}
+excel_sheets(path = readxl_example(path = "datasets.xlsx"))
+```
+
+```{r read_excel}
+mtcars <- read_excel(path = readxl_example(path = "datasets.xlsx"),sheet = 2)
+mtcars <- read_excel(path = readxl_example(path = "datasets.xlsx"),sheet = "mtcars")
+```
+
+
+```{r pdftools}
+library(pdftools)
+
+text<- pdf_text("./RawData/pdftools.pdf")
+length(text)
+class(text)
+text
+print(text)
+text[1]
+pdf_info("./RawData/pdftools.pdf")
+pdf_attachments("./RawData/pdftools.pdf")
+pdf_fonts("./RawData/pdftools.pdf")
+pdf_toc(pdf = "./RawData/pdftools.pdf")
+
+```
+
+```{r pdf_toc}
+library(jsonlite)
+
+jsonlite::toJSON(x = pdf_toc(pdf = "./RawData/pdftools.pdf"), pretty = TRUE)
+
+```
+
+```{r jsonlite}
+
+l <- toJSON(iris,pretty = T)
+identical(fromJSON(l,simplifyDataFrame = T),iris)
+
+example <-  '["a", "b", 0, "c"]'
+class(example)
+example
+fromJSON(example)
+fromJSON(example,simplifyVector = F)
+
+```
+

@@ -1,0 +1,107 @@
+---
+title: "第9章"
+author: "邬书豪 刘健"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+## 加载程序包
+library(dplyr)
+library(data.table)
+library(countrycode)
+library(plotly)
+library(leaflet)
+library(ggplot2)
+## 读取数据
+starbucks <- fread('./directory_changed.csv',encoding = "UTF-8")
+str(starbucks)
+summary(starbucks)
+##简单清洗
+names(starbucks)
+colnames(starbucks) <- make.names(colnames(starbucks))
+names(starbucks)
+## 统计各个各个国家中星巴克店铺的个数
+sta_count <- 
+  starbucks %>% 
+  group_by(Country) %>% 
+  summarise(Counts = n()) %>%
+  arrange(desc(Counts))
+## 统计每个国家店铺数量的占比
+percent <- round(sta_count$Counts / sum(sta_count$Counts) * 100, 2)
+sta_count <- transform(sta_count, Percent = paste0(percent, '%'))
+
+## 对变量重命名，并且重塑一列（国家的全称）
+data(codelist)
+names(sta_count)[1] <- 'iso2'
+sta_count$Country_name <- 
+  codelist[match(sta_count$iso2, 
+                 codelist$iso2c), "country.name.en"]
+## 使用条形图去展示星巴克店铺数前二十的国家
+# sta_count$iso2 <- factor(sta_count$iso2, levels = sta_count$iso2)
+# plot_ly(data = sta_count[1:5, ],
+#         type = 'bar', 
+#         hoverinfo = 'text',
+#         x = ~ iso2,
+#         y = ~ Counts,
+#         text = ~paste(iso2, " counts  : ", Counts, 
+#                       " percent: ", Percent))
+city_count <- 
+  starbucks %>%
+  group_by(City) %>%
+  summarise(Counts = n()) %>%
+  arrange(desc(Counts))
+sta_us <- starbucks[Country == 'US', ]
+sta_gb <- starbucks[starbucks$Country == 'GB', ]
+
+# ggplot(city_count[1:5, ], 
+#        aes(x = reorder(City, Counts), y = Counts, fill = City)) +
+#   geom_bar(stat = 'identity') +
+#   labs(x = 'City', y = 'Counts') +
+#   theme_minimal() +
+#   guides(fill = 'none') +
+#   coord_flip()
+## 统计美国的城市
+top5_us <-  sta_us %>% 
+  group_by(City) %>% 
+  summarise(Counts = n()) %>%
+  arrange(desc(Counts)) %>% 
+  top_n(5)
+
+city_names <- c("纽约", "芝加哥", "拉斯维加斯", "西雅图", "休斯顿")
+rename <- setNames( city_names, top5_us$City)
+top5_us$City <- rename[top5_us$City]
+
+ggplot(top5_us, aes(x = reorder(City, Counts), y = Counts, fill = City)) +
+  geom_bar(stat = 'identity') +
+  labs(x = ' ', y = '店面数量') +
+  theme_minimal() +
+  guides(fill = 'none') +
+  coord_flip()
+## 统计英国的城市
+
+top5_uk <-   sta_gb %>% 
+  group_by(City) %>% 
+  summarise(Counts = n()) %>%
+  arrange(desc(Counts)) %>% 
+  slice(5)
+city_names <- c("伦敦", "曼彻斯特", "爱丁堡", "伯明翰", "格拉斯哥")
+rename <- setNames( city_names, top5_uk$City)
+top5_uk$City <- rename[top5_uk$City]
+
+top5_uk %>% 
+  ggplot(aes(x = reorder(City, Counts), y = Counts, fill = City)) +
+  geom_bar(stat = 'identity') +
+  labs(x = ' ', y = '店面数量') +
+  theme_minimal() +
+  guides(fill = 'none') +
+  coord_flip()
+
+
+```
+

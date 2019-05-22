@@ -1,0 +1,9 @@
+carrier	name
+AA	American Airlines Inc.
+B6	JetBlue Airways
+DL	Delta Air Lines Inc.
+
+carrier	flight	tailnum	origin	dest	air_time
+AA	1141	N619AA	JFK	MIA	160
+B6	725	N804JB	JFK	BQN	183
+DL	461	N668DN	LGA	ATL	116

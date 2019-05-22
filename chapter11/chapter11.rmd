@@ -1,0 +1,191 @@
+---
+title: "第11章"
+author: "邬书豪 刘健"
+output: github_document
+---
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE)
+
+```
+
+
+```{r}
+library(here)         # here()
+library(data.table)   # fread()
+library(tidyverse)    # %>% / arrange / ggplot()
+library(DT)           # datatable()
+library(corrplot)     # corrplot.mixed()
+library(lubridate)    # ymd()
+library(stringr)      # substr()
+```
+
+
+
+```{r}
+here::here()
+```
+
+
+
+```{r}
+gb <- tail(fread('GBvideos.csv', encoding = 'UTF-8'), 200) %>%
+  .[, 'Location':='英国']
+
+fr <- tail(fread('FRvideos.csv', encoding = 'UTF-8'), 200) %>%
+  .[, 'Location':='法国']
+
+ca <- tail(fread('CAvideos.csv', encoding = 'UTF-8'), 200) %>%
+  .[, 'Location':='加拿大']
+
+
+```
+
+```{r}
+videos <- rbindlist(list(gb, fr, ca))
+dim(videos)
+videos %>% 
+  select(title, Location, likes, dislikes,views)
+```
+
+
+```{r title handle}
+videos <- videos[,.(title, Location, likes, dislikes, views)][, title := gsub("\\W", " ", title)]
+head(videos)
+```
+
+
+```{r}
+arr_views <-   videos[, c('title', 'views')] %>%  
+  arrange(desc(views)) %>%          
+  .[!duplicated(.$title), ] %>%     
+  .[1:10, ]                        
+
+arr_views <- setDT(arr_views)[, ranking := 1:.N]
+arr_views[]
+
+```
+
+
+
+```{r }
+dat <- data.frame(x1 = rep(1:3, each = 2), x2 = rep(letters[1:6]))
+dat
+duplicated(dat$x1) 
+dat[!duplicated(dat$x1), ] 
+```
+
+
+
+
+
+
+```{r}
+arr_dislikes <- videos[, c('title', 'dislikes')] %>% 
+  arrange(desc(dislikes)) %>%
+  .[!duplicated(.$title), ] %>% 
+  .[1:3, ]
+
+arr_dislikes
+
+```
+
+
+
+
+```{r}
+videos <- within(videos, {
+  likes_per = round(likes/views, 4)*100
+  dislikes_per = round(dislikes/views, 4)*100
+})
+videos %>% 
+  select(title, ends_with("per")) %>% 
+  head(3)
+```
+
+
+
+
+```{r}
+arr_likes_per <- 
+  videos[, c('title', 'likes_per')] %>% 
+  arrange(desc(likes_per)) %>%
+  .[!duplicated(.$title), ] %>% 
+  .[1:5, ]
+
+arr_likes_per
+
+
+```
+
+
+```{r}
+
+arr_dislikes_per <- videos[, c('title', 'dislikes_per')] %>% 
+  arrange(desc(dislikes_per)) %>%
+  .[!duplicated(.$title), ] %>% 
+  .[1:3, ]
+
+arr_dislikes_per
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## 5、细分国家粒度分析
+### 5.1探索不同国家的视频类型个数
+## 探索不同国家的视频类型个数
+# 对视频样本中重复视频标题进行去重
+
+
+```{r}
+videos <- rbindlist(list(gb, fr, ca))
+videos2 <-  videos %>%
+  select(category_id, Location, title, views, likes, dislikes) %>% 
+  arrange(desc(views)) %>%
+  .[!duplicated(.$title), ]
+head(videos2)
+```
+
+
+### 5.2 统计不同国家的不同视频类型个数
+```{r}
+videos_category <-   videos2 %>% 
+  group_by(category_id, Location) %>%
+  summarise(freq = n()) %>%
+  arrange(desc(freq))
+head(videos_category)
+```
+
+
+
+6、探索不同类型视频的喜欢与不喜欢人数
+
+## 探索不同视频类型的喜欢与不喜欢人数
+## 按照视频类型统计喜欢/不喜欢的人数
+```{r}
+likes_dislikes <- videos2 %>% 
+  group_by(category_id) %>%
+  summarise(c_likes = sum(likes), c_dislikes = sum(dislikes)) %>%
+  arrange(desc(c_likes))
+
+head(likes_dislikes)
+```
+
+
+
+
+
+

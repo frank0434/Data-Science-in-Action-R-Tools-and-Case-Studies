@@ -1,0 +1,271 @@
+---
+title: "第5章"
+author: "刘健"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+```{r map}
+results <- list.files("RawData/",pattern = "*.csv",full.names = T) %>% 
+  set_names() %>% 
+  map( ~ read.csv(.,stringsAsFactors = F))%>%
+  imap( ~ transform(.x, filename = .y)) %>% 
+  map_df(~ mutate(., filename = gsub("RawData\\/|\\.csv|\\s\\(|\\)","",filename)) %>% 
+        group_by(filename,Species) %>% 
+        summarise_if(is.numeric,funs(min,max,mean,sd,median)))
+
+head(results)
+
+```
+
+```{r}
+library(purrr)
+a <- 1:5
+b <- 2:4
+c <- 1:9
+x <- list(a, b, c)
+x
+walk(x,print)
+map(x,print)
+iwalk(mtcars, ~ cat(.y, ": ", median(.x), "\n", sep = ""))
+map_df(x,tibble) %>%
+  head()
+map_df(x,data.frame) %>%
+  head()
+```
+
+```{r}
+map_list <- list.files("RawData/",pattern = "*.csv",full.names = T) %>%
+  map( read.csv, stringsAsFactors = F)
+str(map_list, max.level = 1)
+map_list <- list.files("RawData/",pattern = "*.csv",full.names = T) %>%
+  map(~ read.csv(., stringsAsFactors = F))
+map_df(map_list,as.tibble,.id = "id") %>%
+  head()
+list.files("RawData/",pattern = "*.csv",full.names = T) %>%
+  walk(~ read.csv(., stringsAsFactors = F))
+list.files("RawData/",pattern = "*.csv",full.names = T) %>%
+  map_df(~ read.csv(., stringsAsFactors = F),.id = "id") %>%
+  glimpse()
+
+list.files("RawData/",pattern = "*.csv",full.names = T) %>%
+  map_dfc(~ read.csv(., stringsAsFactors = F),.id = "id") %>%
+  glimpse()
+```
+```{r pmap}
+
+x <- list(1, 10, 100)
+y <- list(1, 2, 3)
+z <- list(5, 50, 500)
+map2(x, y, ~ .x + .y)
+
+df <- tibble(x,y) %>% unnest()
+map2(x, y, paste)
+# Or just
+map2(x, y, `+`)
+pmap(list(x,y,z), ~ ..1+..2+..3)
+
+pmap(list(x,y,z), sum)
+
+df <- tibble(
+  x = c("apple", "banana", "cherry"),
+  pattern = c("p", "n", "h"),
+  replacement = c("x", "f", "q")
+  )
+df
+pmap_chr(df, gsub)
+```
+
+
+```{r imap}
+
+
+iwalk(mtcars, ~ cat(.y, ": ", median(.x), "\n", sep = ""))
+
+walk2(mtcars, names(mtcars),~ cat(.y, ": ", median(.x), "\n", sep = ""))
+
+imap_dfc(mtcars, ~median(.x))
+map2_dfc(mtcars, names(mtcars), ~median(.x))
+
+```
+
+```{r lmap}
+maybe_rep <- function(x) {
+  n <- rpois(1, 2)
+  out <- rep_len(x, n)
+  if (length(out) > 0) {
+    names(out) <- paste0(names(x), seq_len(n))
+  }
+  out
+}
+?rpois
+# The output size varies each time we map f()
+x <- list(a = 1:4, b = letters[5:7], c = 8:9, d = letters[10])
+x
+x %>% lmap(maybe_rep)
+
+# We can apply f() on a selected subset of x
+x %>% lmap_at(c("a", "d"), maybe_rep)
+
+# Or only where a condition is satisfied
+x %>% lmap_if(is.character, maybe_rep)
+
+```
+
+```{r invoke}
+df <- tibble::tibble(
+  f = c("runif", "mean", "sum"),
+  params = list(
+    list(n = 5),
+    list(x = c(5:10,NA,15:20), na.rm = T),
+    list(1:10)
+  )
+)
+df
+invoke_map(df$f,df$params)
+
+df <- as.tibble(mtcars)
+head(df)
+invoke_map(list(mean, 
+                mean, 
+                mean,
+                median,
+                median,
+                median), 
+           list(list(x = df$mpg,na.rm = T),
+                list(x = df$cyl),
+                list(x = df$hp),
+                list(x = df$mpg,na.rm = T),
+                list(x = df$cyl),
+                list(x = df$hp)))
+
+```
+```{r detect}
+is_even <- function(x) x %% 2 == 0
+
+3:10 %>% detect(is_even)
+
+3:10 %>% detect_index(is_even)
+
+
+3:10 %>% detect(is_even, .right = TRUE)
+
+3:10 %>% detect_index(is_even, .right = TRUE)
+x <- list(
+  list(a = as.logical(1), foo = 0),
+  list(b = as.integer(2), foo = as.logical(1)),
+  list(c = 3, foo = TRUE)
+)
+x
+detect(x, "a")
+detect(x, "foo")
+detect(x, "b")
+detect_index(x, "foo", .right = TRUE)
+```
+
+
+
+```{r accumulate}
+
+a <- 1:10
+a
+a %>% 
+  accumulate(sum)
+a
+a %>% 
+  accumulate(sum, .init = 0)
+a
+a %>% 
+  accumulate(sum, .init = 1)
+
+
+
+a %>% 
+  reduce(sum)
+
+
+```
+
+```{r set_names}
+
+nonm <- list.files("RawData/",pattern = "*.csv",full.names = T)
+nonm
+nm <- list.files("RawData/",pattern = "*.csv",full.names = T) %>% 
+  set_names()
+nm
+names(nonm)
+names(nm)
+nm
+
+
+l <- list.files("RawData/",pattern = "*.csv",full.names = T) %>% 
+  set_names() %>% 
+  map( ~ read.csv(.,stringsAsFactors = F))
+
+str(l)
+bigdf <- l %>%
+  imap_dfr( ~ transform(.x, filename = .y))
+str(bigdf)
+bigdf$filename %>% unique()
+
+worksheet <- readxl::excel_sheets("RawData/multiply_spreadsheet.xlsx") %>% 
+  set_names() %>% 
+  map_df(.,~ readxl::read_excel("RawData/multiply_spreadsheet.xlsx",sheet=.),.id = "id") 
+worksheet %>% head()
+worksheet$id %>% unique()
+```
+```{r vec_depth}
+x <- list(a = 1,
+          b = list(a = 1),
+          c = list(aa = list(a = 1)))
+x
+vec_depth(x)
+x %>% map_int(vec_depth)
+```
+
+```{r has_element}
+a <- 1
+b <- 1:10
+
+typeof(a)
+typeof(b)
+
+has_element(a, 1)
+has_element(b, 1)
+has_element(b, as.integer(1))
+
+x <- list(1:10, list(1),-5, 9.9)
+has_element(x, list(1))
+```
+
+```{r head_while}
+x <- list(1,1:3, NA, 0, 1:10, 9.1)
+x
+head_while(x, ~!is.na(.))
+tail_while(x, ~!is.na(.))
+head_while(x, ~.>0)
+tail_while(x, ~.>0)
+```
+
+```{r keep}
+a <- 1:10
+
+keep(a, function(x) x > 3)
+discard(a, ~.>3)
+b <- list(NA,NULL,letters[1:3],1:3,NULL)
+keep(b, is.logical)
+discard(b,is.logical)
+compact(b)
+```
+```{r prepend}
+a <- 1:5
+b <- list(1,2,"A")
+prepend(a, NA, 3)
+prepend(b, NA, 3)
+```
+
